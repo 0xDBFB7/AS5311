@@ -12,9 +12,9 @@ AS5311	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-encoder_position KEYWORD2
-encoder_value	 KEYWORD2
-encoder_error	 KEYWORD2
+encoder_position	KEYWORD2
+encoder_value	KEYWORD2
+encoder_error	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
