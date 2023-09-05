@@ -1,5 +1,7 @@
 #include "Arduino.h"
 #include "AS5311.h"
+#include  <util/parity.h>
+
 
 AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint16_t IndexPin)
            : _data(DataPin), _clock(ClockPin), _cs(ChipSelectPin), _index(IndexPin)
@@ -15,23 +17,26 @@ uint32_t AS5311::encoder_position(void)
 {
   return ((encoder_value() * 2)/4096);
 }
-
+// we also want to be able to associate a specific error code with a specific reading
+// 
 uint32_t AS5311::encoder_value(void)
 {
-  return (read_chip() >> 6);
-}
-
-uint32_t AS5311::encoder_error(void)
-{
-  uint16_t error_code;
   uint32_t raw_value;
   raw_value = read_chip();
+  return (raw_value >> 6);
+}
+
+uint32_t AS5311::encoder_error(uint32_t )
+{
+  uint16_t error_code;
+
   error_code = raw_value & 0b000000000000111111;
   err_value.DECn = error_code & 2;
   err_value.INCn = error_code & 4;
   err_value.LIN = error_code & 8;
   err_value.COF = error_code & 16;
   err_value.OCF = error_code & 32;
+           parity_even_bit()
   return error_code;
 }
 
