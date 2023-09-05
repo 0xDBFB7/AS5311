@@ -2,6 +2,7 @@
 #include "AS5311.h"
 #include  <util/parity.h>
 
+double POLE_SPACING = 2.0; //mm
 
 AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint16_t IndexPin)
            : _data(DataPin), _clock(ClockPin), _cs(ChipSelectPin), _index(IndexPin)
@@ -15,14 +16,13 @@ AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint
 
 double AS5311::encoder_position(void)
 {
-  return ((encoder_value() * 2)/4096);
+  return ((encoder_value() * POLE_SPACING)/4096);
 }
-// we also want to be able to associate a specific error code with a specific reading
-// 
+// we also want to be able to associate a specific error code with a specific reading (if the parity fails, we want to throw out that specific value)
+// Should have a ::read function and then a position / value decoder 
 uint32_t AS5311::encoder_value(void)
 {
-  last_raw_value = read_chip();
-  return (last_raw_value >> 6);
+  return (read_chip() >> 6);
 }
 
 uint32_t AS5311::encoder_error()
@@ -60,6 +60,7 @@ uint32_t AS5311::read_chip(void)
     digitalWrite(_clock, LOW);
     delay(10);
   }
+ last_raw_value = raw_value
  return raw_value;
 }
   
