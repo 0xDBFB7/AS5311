@@ -2,7 +2,7 @@
 #include "AS5311.h"
 #include  <util/parity.h>
 
-double POLE_SPACING = 2.0; //mm
+double POLE_SPACING = 2000.0; //micrometers
 
 AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint16_t IndexPin)
            : _data(DataPin), _clock(ClockPin), _cs(ChipSelectPin), _index(IndexPin)
@@ -17,6 +17,7 @@ AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint
 
 double AS5311::encoder_position(void)
 {
+  //returns micrometers
   return ((encoder_value() * POLE_SPACING)/4096);
 }
 // we also want to be able to associate a specific error code with a specific reading (if the parity fails, we want to throw out that specific value)
