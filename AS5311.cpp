@@ -35,7 +35,7 @@ uint32_t AS5311::encoder_error()
   err_value.LIN = error_code & 8;
   err_value.COF = error_code & 16;
   err_value.OCF = error_code & 32;
-  err_value.PARITY = (last_raw_value == !parity_even_bit(last_raw_value & 0b111111111111111110));
+  err_value.PARITY_OK = (last_raw_value == !parity_even_bit(last_raw_value & 0b111111111111111110));
   return error_code;
 }
 
