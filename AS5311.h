@@ -17,7 +17,7 @@ class AS5311
 	bool OCF;
 	bool COF;
 	bool LIN; 
-	bool PARITY;} err_value;
+	bool PARITY_OK;} err_value;
   private:
     uint32_t read_chip(void);
     const uint16_t _clock;        // clock pin: output from arduino to as5311
