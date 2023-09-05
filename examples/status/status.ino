@@ -22,7 +22,12 @@ void loop()
     if (myAS5311.err_value.DECn) Serial.println("DECn error");
     if (myAS5311.err_value.INCn) Serial.println("INCn error");
     if (myAS5311.err_value.COF) Serial.println("COF error");
-    if (myAS5311.err_value.OCF) Serial.println("OCF error");
+    if (myAS5311.err_value.OCF){
+      Serial.println("Offset Compensation Finished successfully");
+    }
+    else{
+      Serial.println("Offset Compensation failed error");
+    }
     if (myAS5311.err_value.LIN) Serial.println("LIN error");
   }
   delay(2000);
