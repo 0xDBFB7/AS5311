@@ -13,20 +13,21 @@ void loop()
   value = myAS5311.encoder_value();
   Serial.print("measured value: ");
   Serial.println(value);
-  value = myAS5311.encoder_position();
+  double decimal_value;
+  decimal_value = myAS5311.encoder_position();
   Serial.print("measured position: ");
-  Serial.println(value);
+  Serial.println(decimal_value);
   if (myAS5311.encoder_error())
   {
     Serial.println("error detected.");
     if (myAS5311.err_value.DECn) Serial.println("DECn error");
     if (myAS5311.err_value.INCn) Serial.println("INCn error");
     if (myAS5311.err_value.COF) Serial.println("COF error");
-    if (myAS5311.err_value.OCF){
-      Serial.println("Offset Compensation Finished successfully");
+    if (!myAS5311.err_value.OCF){
+            Serial.println("Offset Compensation failed error");
     }
-    else{
-      Serial.println("Offset Compensation failed error");
+    if (!myAS5311.err_value.PARITY_OK){
+      Serial.println("Parity check failed");
     }
     if (myAS5311.err_value.LIN) Serial.println("LIN error");
   }
