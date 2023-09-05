@@ -12,7 +12,8 @@ AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint
     pinMode(_cs, OUTPUT);
     pinMode(_index, INPUT);
 }
-
+// should have an interrupt counting INDEX pulses
+// or just overflow counting
 
 double AS5311::encoder_position(void)
 {
@@ -27,7 +28,6 @@ uint32_t AS5311::encoder_value(void)
 
 uint32_t AS5311::encoder_error()
 {
-  uint16_t error_code;
 
   error_code = last_raw_value & 0b000000000000111111;
   err_value.DECn = error_code & 2;
@@ -36,7 +36,14 @@ uint32_t AS5311::encoder_error()
   err_value.COF = error_code & 16;
   err_value.OCF = error_code & 32;
   err_value.PARITY_OK = (last_raw_value == !parity_even_bit(last_raw_value & 0b111111111111111110));
-  return error_code;
+  //OCF should be 1 if everything's OK
+  if(err_value.DECn || err_value.INCn || err_value.LIN || err_value.COF ||
+             err_value.OCF != 1 || err_value.PARITY_OK){
+    return 1;
+  }
+  else{
+    return 0;
+  }
 }
 
 uint32_t AS5311::read_chip(void)
