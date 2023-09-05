@@ -21,22 +21,21 @@ double AS5311::encoder_position(void)
 // 
 uint32_t AS5311::encoder_value(void)
 {
-  uint32_t raw_value;
-  raw_value = read_chip();
-  return (raw_value >> 6);
+  last_raw_value = read_chip();
+  return (last_raw_value >> 6);
 }
 
-uint32_t AS5311::encoder_error(uint32_t )
+uint32_t AS5311::encoder_error()
 {
   uint16_t error_code;
 
-  error_code = raw_value & 0b000000000000111111;
+  error_code = last_raw_value & 0b000000000000111111;
   err_value.DECn = error_code & 2;
   err_value.INCn = error_code & 4;
   err_value.LIN = error_code & 8;
   err_value.COF = error_code & 16;
   err_value.OCF = error_code & 32;
-           parity_even_bit()
+  err_value.PARITY = (last_raw_value == !parity_even_bit(last_raw_value & 0b111111111111111110));
   return error_code;
 }
 
