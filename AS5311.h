@@ -10,6 +10,7 @@ class AS5311
     uint32_t encoder_position(void);
     uint32_t encoder_value(void);
     uint32_t encoder_error(void);
+    uint32_t last_raw_reading = 0;
     struct err_struct{
   	bool DECn;
 	bool INCn;
