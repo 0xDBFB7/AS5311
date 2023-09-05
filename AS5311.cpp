@@ -13,7 +13,7 @@ AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint
 }
 
 
-uint32_t AS5311::encoder_position(void)
+double AS5311::encoder_position(void)
 {
   return ((encoder_value() * 2)/4096);
 }
