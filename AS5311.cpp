@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "AS5311.h"
-#include "digitalWriteFast.h"
+//#include "digitalWriteFast.h"
 
 double POLE_SPACING = 2000.0; //micrometers
 
@@ -24,22 +24,26 @@ AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint
 // of travel. however, if there is a jump in position and an index pulse flag was set,
 // we know we overflowed.
 
+// double AS5311::accumulate_position(void){
+  
+// }
 
-double AS5311::encoder_position_um(void)
+double AS5311::encoder_position_within_pole_um(void)
 {
   //returns micrometers
-  return ((encoder_value() * POLE_SPACING)/4096);
+  return ((encoder_raw_counts() * POLE_SPACING)/4096);
 }
 
 // we also want to be able to associate a specific error code with a specific reading (if the parity fails, we want to throw out that specific value)
 // Should have a ::read function and then a position / value decoder 
-uint32_t AS5311::encoder_value(void)
+uint32_t AS5311::encoder_raw_counts(void)
 {
-  return (this->last_raw_reading >> 6);
+  return (this->latest_raw_sensor_word >> 6);
 }
 
+
 bool has_even_parity(uint32_t x){
-  //https://stackoverflow.com/a/21618054
+  // from https://stackoverflow.com/a/21618054
     uint32_t count = 0, i, b = 1;
 
     for(i = 0; i < 32; i++){
@@ -67,6 +71,7 @@ bool AS5311::parity_check(uint32_t raw_value){
 
   // Then tried __builtin_parity is a GCC builtin 
   // https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+  // which, because 'int' is 16 bit on Arduino, still doesn't work right.
   
   // Note the different definitions of parity functions.
   // some *give you* the bit you need for even parity:
@@ -75,53 +80,66 @@ bool AS5311::parity_check(uint32_t raw_value){
 }
 
 
-uint32_t AS5311::encoder_error()
+bool AS5311::parse_status()
 {
-
-  uint32_t error_code = this->last_raw_reading & 0b000000000000111111;
+  uint32_t error_code = this->latest_raw_sensor_word & 0b000000000000111111;
   err_value.DECn = error_code & 2;
   err_value.INCn = error_code & 4;
   err_value.LIN = error_code & 8;
   err_value.COF = error_code & 16;
   err_value.OCF = error_code & 32;
   
-  err_value.PARITY_OK = AS5311::parity_check(this->last_raw_reading);
+  err_value.PARITY_OK = AS5311::parity_check(this->latest_raw_sensor_word);
   //OCF should be 1 if everything's OK
   if(err_value.DECn || err_value.INCn || err_value.LIN || err_value.COF ||
              err_value.OCF == 0 || err_value.PARITY_OK == 0){
-    return 1;
+    err_value.READING_VALID = 0;
   }
   else{
-    return 0;
+    err_value.READING_VALID = 1;
   }
 }
+
+
 
 #define TIMING_CYCLE_TIME_US 100
 
-uint32_t AS5311::read(void)
+uint32_t AS5311::read_raw_sensor_word(void)
 {
+  // thanks to PJE66
+  // I wanted to used WriteFast, but behaves weirdly with the constant
   uint32_t raw_value = 0;
   uint16_t inputstream = 0;
   uint16_t c;
-  digitalWriteFast(_cs, HIGH);
-  digitalWriteFast(_clock, HIGH);
-  delayMicroseconds(TIMING_CYCLE_TIME_US);
-  digitalWriteFast(_cs, LOW);
-  delayMicroseconds(TIMING_CYCLE_TIME_US);
-  digitalWriteFast(_clock, LOW);
-  delayMicroseconds(TIMING_CYCLE_TIME_US);
-  for (c = 0; c < 18; c++)
-  {
-    digitalWriteFast(_clock, HIGH);
-    delayMicroseconds(TIMING_CYCLE_TIME_US);
-    inputstream = digitalReadFast(_data);
-    raw_value = ((raw_value << 1) + inputstream);
-    digitalWriteFast(_clock, LOW);
-    delayMicroseconds(TIMING_CYCLE_TIME_US);
+   
+  // Default State
+  digitalWrite(_cs, HIGH);
+  digitalWrite(_clock, HIGH);
+  delayMicroseconds(TIMING_CYCLE_TIME_US); 
+  // Preamble
+  digitalWrite(_cs, LOW); 
+  delayMicroseconds(TIMING_CYCLE_TIME_US); 
+  digitalWrite(_clock, LOW);
+  delayMicroseconds(TIMING_CYCLE_TIME_US); 
+  digitalWrite(_clock, HIGH);
+  // Clock out Data
+  for (c = 0; c < 18; c++) {
+      delayMicroseconds(TIMING_CYCLE_TIME_US); 
+      digitalWrite(_clock, LOW);
+      inputstream = digitalRead(_data);
+      raw_value = ((raw_value << 1) + inputstream);
+      delayMicroseconds(TIMING_CYCLE_TIME_US); 
+      digitalWrite(_clock, HIGH);
   }
- this->last_raw_reading = raw_value;
- return raw_value;
+  delayMicroseconds(TIMING_CYCLE_TIME_US); 
+  digitalWrite(_cs, HIGH);
+  delayMicroseconds(TIMING_CYCLE_TIME_US); 
+
+  return raw_value;
+
 }
   
-
-
+void AS5311::read(void){ 
+  this->latest_raw_sensor_word = this->read_raw_sensor_word();
+  this->parse_status();
+}

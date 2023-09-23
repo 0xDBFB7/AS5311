@@ -9,15 +9,17 @@ void setup()
 
 void loop()
 {
+  myAS5311.read();
+
   long value;
-  value = myAS5311.encoder_value();
-  Serial.print("measured value: ");
+  value = myAS5311.encoder_raw_counts();
+  Serial.print("measured counts: ");
   Serial.println(value);
   double decimal_value;
-  decimal_value = myAS5311.encoder_position();
-  Serial.print("measured position: ");
+  decimal_value = myAS5311.encoder_position_within_pole_um();
+  Serial.print("measured position within pole: ");
   Serial.println(decimal_value);
-  if (myAS5311.encoder_error())
+  if (myAS5311.err_value.READING_VALID != true)
   {
     Serial.println("error detected.");
     if (myAS5311.err_value.DECn) Serial.println("DECn error");
@@ -31,5 +33,6 @@ void loop()
     }
     if (myAS5311.err_value.LIN) Serial.println("LIN error");
   }
-  delay(500);
+
+  delay(100);
 }
