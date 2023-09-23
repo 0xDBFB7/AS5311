@@ -4,7 +4,7 @@ AS5311 myAS5311(2,3,4,5); // data, clock, chip select, index
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop()
@@ -31,5 +31,5 @@ void loop()
     }
     if (myAS5311.err_value.LIN) Serial.println("LIN error");
   }
-  delay(2000);
+  delay(500);
 }
