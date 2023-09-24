@@ -82,7 +82,8 @@ bool AS5311::parity_check(uint32_t raw_value){
 
 bool AS5311::parse_status()
 {
-  uint32_t error_code = this->latest_raw_sensor_word & 0b000000000000111111;
+  uint32_t error_code = this->latest_raw_sensor_word & 0b000000000000111111; 
+
   err_value.DECn = error_code & 2;
   err_value.INCn = error_code & 4;
   err_value.LIN = error_code & 8;
@@ -90,8 +91,24 @@ bool AS5311::parse_status()
   err_value.OCF = error_code & 32;
   
   err_value.PARITY_OK = AS5311::parity_check(this->latest_raw_sensor_word);
-  //OCF should be 1 if everything's OK
-  if(err_value.DECn || err_value.INCn || err_value.LIN || err_value.COF ||
+  
+  /*
+  OCF (Offset Compensation Finished) should be 1 if everything's OK.
+  COF (Cordic Overflow), logic high indicates an out of range error in the CORDIC part. 
+      When this bit is set, the data at D11:D0 (likewise M11:M0) is invalid.
+      This alarm may be resolved by bringing the magnet within the X-Y-Z tolerance limits.
+  LIN (Linearity Alarm), logic high indicates that the input field generates a critical output linearity. 
+      When this bit is set, the data at D11:D0 may still be used, but can contain invalid data. 
+      This warning can be resolved by increasing the magnetic field strength. 
+
+  DECn and INCn are a little confusing. They will toggle when the field strength is 
+  currently increasing or decreasing. Only if both are ON is the field strength actually low.
+
+
+  */
+  bool field_strength_yellow = (err_value.DECn == 1 && err_value.INCn == 1);
+
+  if(field_strength_yellow || err_value.LIN || err_value.COF ||
              err_value.OCF == 0 || err_value.PARITY_OK == 0){
     err_value.READING_VALID = 0;
   }
@@ -106,6 +123,10 @@ bool AS5311::parse_status()
 
 uint32_t AS5311::read_raw_sensor_word(void)
 {
+  /*
+  If CLK is low at the falling edge of CSn, the first 12 bits represent the magnitude information, 
+  which is proportional to the magnetic field strength. 
+  */
   // thanks to PJE66
   // I wanted to used WriteFast, but behaves weirdly with the constant
   uint32_t raw_value = 0;
