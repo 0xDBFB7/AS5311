@@ -10,14 +10,19 @@ class AS5311
     void read(void);
     uint32_t read_raw_sensor_word(void);
     double encoder_position_within_pole_um(void);
+    double accumulated_position_um(void);
+    void accumulate_poles(void);
     uint32_t encoder_raw_counts(void);
     uint32_t encoder_error(void); 
     bool parse_status(void);
 
     bool parity_check(uint32_t);
     uint32_t latest_raw_sensor_word = 0;
-    uint32_t last_raw_valid_counts = 0;
-    double accumulated_position = 0;
+
+    double previous_position_within_pole_um = 0;
+    double latest_position_within_pole_um = 0;
+
+    int32_t accumulated_poles = 0;
     struct err_struct{
   	bool DECn;
     bool INCn;

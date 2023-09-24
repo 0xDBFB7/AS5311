@@ -19,6 +19,8 @@ void loop()
   decimal_value = myAS5311.encoder_position_within_pole_um();
   Serial.print("measured position within pole: ");
   Serial.println(decimal_value);
+  Serial.print("accumulated position: ");
+  Serial.println(myAS5311.accumulated_position_um());  
   if (myAS5311.err_value.READING_VALID != true)
   {
     Serial.println("error detected.");
@@ -34,5 +36,5 @@ void loop()
     if (myAS5311.err_value.LIN) Serial.println("LIN error");
   }
 
-  delay(100);
+  delay(10);
 }

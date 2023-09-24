@@ -24,9 +24,22 @@ AS5311::AS5311(uint16_t DataPin, uint16_t ClockPin, uint16_t ChipSelectPin, uint
 // of travel. however, if there is a jump in position and an index pulse flag was set,
 // we know we overflowed.
 
-// double AS5311::accumulate_position(void){
-  
-// }
+void AS5311::accumulate_poles(void){  
+  double high_threshold = POLE_SPACING*(9.0/10.0);
+  double low_threshold = POLE_SPACING*(1.0/10.0);
+  if(this->previous_position_within_pole_um > high_threshold and this->latest_position_within_pole_um < low_threshold){
+    this->accumulated_poles++;
+  }
+  if(this->previous_position_within_pole_um < low_threshold and this->latest_position_within_pole_um > high_threshold){
+    this->accumulated_poles--;
+  }
+}
+
+double AS5311::accumulated_position_um(void){  
+  return (this->accumulated_poles * POLE_SPACING) + this->encoder_position_within_pole_um();
+}
+
+
 
 double AS5311::encoder_position_within_pole_um(void)
 {
@@ -163,4 +176,11 @@ uint32_t AS5311::read_raw_sensor_word(void)
 void AS5311::read(void){ 
   this->latest_raw_sensor_word = this->read_raw_sensor_word();
   this->parse_status();
+  
+  if(err_value.READING_VALID){
+    this->previous_position_within_pole_um = this->latest_position_within_pole_um;
+    
+    this->latest_position_within_pole_um = this->encoder_position_within_pole_um();
+    this->accumulate_poles();
+  }
 }
